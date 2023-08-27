@@ -5,28 +5,6 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const { getToken } = require('../../utils');
 
-const createUser = async (req, res, next) => {
-    try {
-        const payload = req.body;
-
-        let user = await User.create(payload);
-
-        return res.json(user);
-    } catch (err) {
-        //* Kemungkinan eror karena Validasi
-        if (err && err.name === "ValidationError") {
-            return res.json({
-                error: 1,
-                message: err.message,
-                fields: err.errors
-            });
-        }
-
-        //* Error lainnya
-        next(err);
-    }
-}
-
 const localStrategy = async (email, password, done) => {
     try {
         let user = await User.findOne({ email }).select('-__v -createdAt -cart_items -token');
@@ -79,7 +57,6 @@ const logout = async (req, res, next) => {
 }
 
 module.exports = {
-    createUser,
     login,
     localStrategy,
     logout

@@ -2,7 +2,7 @@ const BarangMasuk = require('../models/barangMasukModel');
 
 const index = async (req, res, next) => {
     try {
-        let barang = await BarangMasuk.find().populate('product');
+        let barang = await BarangMasuk.find({ qty_masuk: { $ne: 0 } }).populate('product');
         return res.json({
             data: barang
         })

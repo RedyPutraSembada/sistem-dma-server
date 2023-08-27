@@ -3,13 +3,11 @@ const index = async (req, res, next) => {
     const { start, end } = req.query;
     try {
         if (start === 'null' || end === 'null') {
-            console.log('hello1');
             let barang = await BarangKeluar.find().populate("product");
             return res.json({
                 data: barang
             });
         } else {
-            console.log('hello3');
             const dates = new Date(start);
             const tgls = dates.getDate();
             const months = dates.getMonth();

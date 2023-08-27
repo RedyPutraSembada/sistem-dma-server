@@ -9,7 +9,8 @@ function getToken(req) {
 //* policy 
 const policies = {
     coAdmin(user, { can }) {
-        can('read', 'all');
+        can('index', 'Product');
+        can('index', 'User');
     },
     admin(user, { can }) {
         can('manage', 'all');
