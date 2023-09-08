@@ -23,7 +23,7 @@ const cekTgl = function () {
                 }
                 else if (jumlah.length === 1) {
 
-                    //* pengecekan untuk pendataan pada bulan ke 3 atau ganjil
+                    //* pengecekan untuk pendataan pada bulan ke 3
                     let barangMasukTerakhir = {
                         qty_masuk: 10
                     }

@@ -12,6 +12,23 @@ let barangKeluarSchema = Schema({
         type: Number,
         default: 0
     },
+
+    qty_keluar_sebelumnya: {
+        type: Number,
+        default: 0
+    },
+
+    total_qty_keluar: {
+        required: [true, "Qty Masuk Harus Diisi"],
+        type: Number,
+        default: 0
+    },
+
+    active: {
+        type: Number,
+        default: 1
+    },
+
     tgl_keluar: String,
 
     price_product: {

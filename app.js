@@ -20,6 +20,8 @@ const productRoute = require('./routes/productRoute');
 const barangKeluarRoute = require('./routes/barangKeluarRoute');
 const barangMasukRoute = require('./routes/barangMasukRoute');
 const userRoute = require('./routes/userRoute');
+const dashRoute = require('./routes/dashboardRoute');
+const recordRoute = require('./routes/recordAksiRoute');
 const indexRouter = require('./routes/index');
 
 var app = express();
@@ -39,6 +41,8 @@ cekTgl();
 app.use(decodeToken());
 app.use('/', indexRouter);
 app.use('/auth', userAuthRoute);
+app.use('/api', dashRoute);
+app.use('/api', recordRoute);
 app.use('/api', userRoute);
 app.use('/api', productRoute);
 app.use('/api', barangKeluarRoute);
