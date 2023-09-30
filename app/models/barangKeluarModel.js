@@ -28,6 +28,7 @@ let barangKeluarSchema = Schema({
         type: Number,
         default: 1
     },
+    tahun_bulan: String,
 
     tgl_keluar: String,
 

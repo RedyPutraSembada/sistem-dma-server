@@ -32,7 +32,9 @@ const store = async (req, res, next) => {
                         qty_sebelum: 0,
                         qty_masuk: payload.qty,
                         qty_masuk_sebelumnya: 0,
+                        tahun_bulan: `${thn}-${bln + 1}`,
                         total_qty_masuk: payload.qty,
+                        active: 1,
                         product: product._id,
                         tgl_masuk: `${thn}-${bln + 1}-${tgl}`
                     }
@@ -71,6 +73,8 @@ const store = async (req, res, next) => {
                 qty_sebelum: 0,
                 qty_masuk: payload.qty,
                 qty_masuk_sebelumnya: 0,
+                total_qty_masuk: payload.qty,
+                active: 1,
                 product: product._id,
                 tgl_masuk: `${thn}-${bln + 1}-${tgl}`
             }
@@ -238,18 +242,20 @@ const updateQtyKeluar = async (req, res, next) => {
             await recordAksi.save();
         }
 
-        let brngkeluar = await BarangKeluar.findOne({ product: id }).sort({ createdAt: -1 }).limit(1);
+        // let rcdAks = await RecordAksi.find({ product: id, tahun_bulan: `${thn}-${bln + 1}` });
+        let brngkeluar = await BarangKeluar.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
         let qty_keluar_sebelumnya = brngkeluar === null ? 0 : brngkeluar.qty_keluar;
         let total_qty_keluar = brngkeluar === null ? 0 + parseInt(qty) : brngkeluar.total_qty_keluar + parseInt(qty);
-        console.log(qty_keluar_sebelumnya, total_qty_keluar);
+        // console.log(qty_keluar_sebelumnya, total_qty_keluar);
         let data = {
             product: id,
             qty_sebelum: qtySblm,
             active: 1,
+            tahun_bulan: `${thn}-${bln + 1}`,
             qty_keluar: parseInt(qty),
             price_product: product.price,
-            qty_keluar_sebelumnya: brngkeluar === null ? 0 : brngkeluar.qty_keluar,
-            total_qty_keluar: brngkeluar === null ? 0 + parseInt(qty) : brngkeluar.total_qty_keluar + parseInt(qty),
+            qty_keluar_sebelumnya: qty_keluar_sebelumnya,
+            total_qty_keluar: total_qty_keluar,
             tgl_keluar: `${thn}-${bln + 1}-${tgl}`,
         }
 
@@ -308,15 +314,18 @@ const updateQtyMasuk = async (req, res, next) => {
             let recordAksi = new RecordAksi(rcrdAksi);
             await recordAksi.save();
         }
-        let brngMasuk = await BarangMasuk.findOne({ product: id }).sort({ createdAt: -1 }).limit(1);
+        let brngMasuk = await BarangMasuk.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
+        // console.log(brngMasuk);
+        let qty_masuk_sebelumnya = brngMasuk === null ? 0 : brngMasuk.qty_masuk;
+        let total_qty_masuk = brngMasuk === null ? 0 + parseInt(qty) : brngMasuk.total_qty_masuk + parseInt(qty);
 
         let data = {
             product: id,
             qty_sebelum: 0,
             active: 1,
             qty_masuk: parseInt(qty),
-            qty_masuk_sebelumnya: brngMasuk.qty_masuk,
-            total_qty_masuk: brngMasuk.total_qty_masuk + parseInt(qty),
+            qty_masuk_sebelumnya: qty_masuk_sebelumnya,
+            total_qty_masuk: total_qty_masuk,
             tgl_masuk: `${thn}-${bln + 1}-${tgl}`,
         }
         brngMasuk.active = 0;

@@ -2,6 +2,7 @@ const schedule = require('node-schedule');
 const Product = require('../models/productModel');
 const BarangMasuk = require('../models/barangMasukModel');
 const BarangKeluar = require('../models/barangKeluarModel');
+const RecordAksi = require('../models/recordAksiModel');
 
 const cekTgl = function () {
     try {
@@ -9,19 +10,24 @@ const cekTgl = function () {
         schedule.scheduleJob('0 4 1 * *', async function () {
             let product = await Product.find();
             product.map(async (item, i) => {
-                let jumlah = await BarangMasuk.find({ product: item._id, qty_masuk: { $ne: 0 } });
+                let jumlah = await BarangMasuk.find({ product: item._id, qty_masuk: { $ne: 0 }, active: 1 });
 
-                //* pengecekan untuk pertama kali menambahkan 10 qty, untuk masuk bulan ke 2 atau genap
-                if (jumlah.length === 0) {
+                //* pengecekan untuk pertama kali menambahkan qty berdasarkan input sebelumnya, pendataan bulan ke 1 untuk masuk bulan ke bulan ke 2
+                if (jumlah.length === 1) {
+                    let data = await BarangMasuk.findOne({ product: item._id, qty_masuk: { $ne: 0 }, active: 1 }).limit(1);
+                    // console.log(data);
+                    // console.log("1");
                     let barangMasukTerakhir = {
-                        qty_masuk: 10
+                        total_qty_masuk: data.total_qty_masuk
                     }
-                    //? Memasukan Data Pada bulan Genap
-                    await _masukanDataBulanGenap(item, barangMasukTerakhir);
+                    let rcdAks = await RecordAksi.findOne({ product: item._id }).limit(1);
+                    // console.log(rcdAks);
+                    //? Memasukan Data Pada bulan ke 2
+                    await _masukanDataQtySama(item, barangMasukTerakhir, rcdAks);
 
-                    console.log('data bulan pertama telah di tambahkan');
+                    console.log('data bulan kedua telah di tambahkan');
                 }
-                else if (jumlah.length === 1) {
+                else if (jumlah.length === 2) {
 
                     //* pengecekan untuk pendataan pada bulan ke 3
                     let barangMasukTerakhir = {
@@ -31,14 +37,14 @@ const cekTgl = function () {
                     await _masukanDataKeBulanGanjil(item, barangMasukTerakhir);
 
                     console.log('data bulan pertama telah di tambahkan untuk bln 3');
-                } else if (jumlah.length > 1) {
+                } else if (jumlah.length > 2) {
                     let jmlhDataBarang = jumlah.length % 2;
-                    let barangMasukTerakhir = await BarangMasuk.findOne({ product: item._id }).sort({ _id: -1 }).limit(1);
+                    let barangMasukTerakhir = await BarangMasuk.findOne({ product: item._id, active: 1 }).sort({ _id: -1 }).limit(1);
                     if (jmlhDataBarang === 0) {
 
                         //* masuk perubahan qty pada bulan ke genap, contoh : 4,6,8....
                         //? Memasukan Data Pada bulan Genap
-                        await _masukanDataBulanGenap(item, barangMasukTerakhir);
+                        await _masukanDataQtySama(item, barangMasukTerakhir);
 
                         console.log('data qty masuk pada bulan genap, jmlh qty yg masuk sama');
                     } else if (jmlhDataBarang === 1) {
@@ -135,18 +141,29 @@ const _masukanDataKeBulanGanjil = async (item, barangMasukTerakhir) => {
 }
 
 //!==============================
-const _masukanDataBulanGenap = async (item, barangMasukTerakhir) => {
+const _masukanDataQtySama = async (item, barangMasukTerakhir, rcdAks) => {
     let date = new Date();
     let tgl = date.getDate();
     let bln = date.getMonth();
     let thn = date.getFullYear();
     let data = {
         qty_sebelum: item.qty,
-        qty_masuk: parseInt(barangMasukTerakhir.qty_masuk),
+        qty_masuk: parseInt(barangMasukTerakhir.total_qty_masuk),
+        qty_masuk_sebelumnya: 0,
+        total_qty_masuk: parseInt(barangMasukTerakhir.total_qty_masuk) + parseInt(rcdAks.qty),
         product: item._id,
+        active: 1,
         tgl_masuk: `${thn}-${bln + 1}-${tgl}`
     }
-    await Product.findByIdAndUpdate(item._id, { qty: (item.qty + parseInt(barangMasukTerakhir.qty_masuk)) });
+    let rcrdAksi = {
+        qty: parseInt(barangMasukTerakhir.total_qty_masuk) + parseInt(rcdAks.qty),
+        tahun_bulan: `${thn}-${bln + 1}`,
+        tgl_update: `${thn}-${bln + 1}-${tgl}`,
+        product: item._id
+    }
+    let recordAksi = new RecordAksi(rcrdAksi);
+    await recordAksi.save();
+    await Product.findByIdAndUpdate(item._id, { qty: (parseInt(barangMasukTerakhir.total_qty_masuk) + parseInt(rcdAks.qty)) });
     let barang = new BarangMasuk(data);
     await barang.save();
 }
