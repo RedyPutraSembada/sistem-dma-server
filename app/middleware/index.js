@@ -22,21 +22,26 @@ const cekTgl = function () {
                     }
                     let rcdAks = await RecordAksi.findOne({ product: item._id }).limit(1);
                     // console.log(rcdAks);
-                    //? Memasukan Data Pada bulan ke 2
+                    //? Memasukan Data Pada bulan ke1
                     await _masukanDataQtySama(item, barangMasukTerakhir, rcdAks);
 
-                    console.log('data bulan kedua telah di tambahkan');
+                    console.log('data bulan pertama telah di tambahkan');
                 }
                 else if (jumlah.length === 2) {
+                    let data = await BarangMasuk.findOne({ product: item._id, qty_masuk: { $ne: 0 }, active: 1 }).sort({ createdAt: -1 }).limit(1);
 
                     //* pengecekan untuk pendataan pada bulan ke 3
                     let barangMasukTerakhir = {
-                        qty_masuk: 10
+                        total_qty_masuk: data.total_qty_masuk
                     }
-                    //? Memasukan Data Pada bulan Ganjil
-                    await _masukanDataKeBulanGanjil(item, barangMasukTerakhir);
 
-                    console.log('data bulan pertama telah di tambahkan untuk bln 3');
+                    let rcdAks = await RecordAksi.findOne({ product: item._id }).sort({ createdAt: -1 }).limit(1);
+                    // console.log(data);
+                    // console.log(rcdAks);
+                    //? Memasukan Data Pada bulan kedua
+                    await _masukanDataQtySama(item, barangMasukTerakhir, rcdAks);
+
+                    console.log('data bulan kedua telah di tambahkan');
                 } else if (jumlah.length > 2) {
                     let jmlhDataBarang = jumlah.length % 2;
                     let barangMasukTerakhir = await BarangMasuk.findOne({ product: item._id, active: 1 }).sort({ _id: -1 }).limit(1);
@@ -142,6 +147,9 @@ const _masukanDataKeBulanGanjil = async (item, barangMasukTerakhir) => {
 
 //!==============================
 const _masukanDataQtySama = async (item, barangMasukTerakhir, rcdAks) => {
+    console.log(item);
+    console.log(barangMasukTerakhir);
+    console.log(rcdAks);
     let date = new Date();
     let tgl = date.getDate();
     let bln = date.getMonth();
