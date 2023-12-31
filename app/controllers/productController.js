@@ -38,6 +38,7 @@ const store = async (req, res, next) => {
                         product: product._id,
                         tgl_masuk: `${thn}-${bln + 1}-${tgl}`
                     }
+                    console.log(brngMasuk);
                     let barangMasuk = new BarangMasuk(brngMasuk);
                     let rcrdAksi = {
                         qty: payload.qty,
@@ -45,6 +46,7 @@ const store = async (req, res, next) => {
                         tgl_update: `${thn}-${bln + 1}-${tgl}`,
                         product: product._id
                     }
+                    console.log(rcrdAksi);
                     let recordAksi = new RecordAksi(rcrdAksi);
                     await product.save();
                     await barangMasuk.save();
@@ -80,7 +82,7 @@ const store = async (req, res, next) => {
             }
             let barangMasuk = new BarangMasuk(brngMasuk);
             let rcrdAksi = {
-                qty: 10,
+                qty: payload.qty,
                 tahun_bulan: `${thn}-${bln + 1}`,
                 tgl_update: `${thn}-${bln + 1}-${tgl}`,
                 product: product._id
@@ -222,6 +224,8 @@ const updateQtyKeluar = async (req, res, next) => {
 
         let rcdAks = await RecordAksi.find({ product: id, tahun_bulan: `${thn}-${bln + 1}` });
         if (rcdAks.length > 0) {
+            console.log("ada data qty ========================");
+            console.log(rcdAks);
             let rcrdAksi = {
                 qty: rcdAks[0].qty - parseInt(qty),
                 tahun_bulan: `${thn}-${bln + 1}`,
@@ -232,6 +236,8 @@ const updateQtyKeluar = async (req, res, next) => {
             let recordAksi = new RecordAksi(rcrdAksi);
             await recordAksi.save();
         } else if (rcdAks.length === 0) {
+            console.log("Tidak ada data qty ========================");
+            console.log(rcdAks);
             let rcrdAksi = {
                 qty: qtySblm - parseInt(qty),
                 tahun_bulan: `${thn}-${bln + 1}`,
@@ -242,11 +248,26 @@ const updateQtyKeluar = async (req, res, next) => {
             await recordAksi.save();
         }
 
+        //? Sebelumnya
         // let rcdAks = await RecordAksi.find({ product: id, tahun_bulan: `${thn}-${bln + 1}` });
-        let brngkeluar = await BarangKeluar.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
-        let qty_keluar_sebelumnya = brngkeluar === null ? 0 : brngkeluar.qty_keluar;
-        let total_qty_keluar = brngkeluar === null ? 0 + parseInt(qty) : brngkeluar.total_qty_keluar + parseInt(qty);
+        // let brngkeluar = await BarangKeluar.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
+        // let qty_keluar_sebelumnya = brngkeluar === null ? 0 : brngkeluar.qty_keluar;
+        // let total_qty_keluar = brngkeluar === null ? 0 + parseInt(qty) : brngkeluar.total_qty_keluar + parseInt(qty);
         // console.log(qty_keluar_sebelumnya, total_qty_keluar);
+
+
+        //? Yang Baru
+        let brngMasuk = await BarangMasuk.find({ product: id, active: 1 });
+        console.log(brngMasuk.length === 2);
+        let brngkeluar;
+        if (brngMasuk.length === 2) {
+            brngkeluar = await BarangKeluar.findOne({ product: id, active: 1 }).sort({ createdAt: -1 }).limit(1);
+        } else {
+            brngkeluar = await BarangKeluar.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
+        }
+        let qty_keluar_sebelumnya = brngkeluar === null ? 0 : brngkeluar.total_qty_keluar;
+        let total_qty_keluar = brngkeluar === null ? 0 + parseInt(qty) : brngkeluar.total_qty_keluar + parseInt(qty);
+        console.log(qty_keluar_sebelumnya, total_qty_keluar);
         let data = {
             product: id,
             qty_sebelum: qtySblm,
@@ -314,10 +335,26 @@ const updateQtyMasuk = async (req, res, next) => {
             let recordAksi = new RecordAksi(rcrdAksi);
             await recordAksi.save();
         }
-        let brngMasuk = await BarangMasuk.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
-        // console.log(brngMasuk);
-        let qty_masuk_sebelumnya = brngMasuk === null ? 0 : brngMasuk.qty_masuk;
-        let total_qty_masuk = brngMasuk === null ? 0 + parseInt(qty) : brngMasuk.total_qty_masuk + parseInt(qty);
+
+
+        //? Yang Lama
+        // let brngMasuk = await BarangMasuk.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
+        // // console.log(brngMasuk);
+        // let qty_masuk_sebelumnya = brngMasuk === null ? 0 : brngMasuk.qty_masuk;
+        // let total_qty_masuk = brngMasuk === null ? 0 + parseInt(qty) : brngMasuk.total_qty_masuk + parseInt(qty);
+
+        //? Yang Baru
+        let brngMasuk = await BarangMasuk.find({ product: id, active: 1 });
+        console.log(brngMasuk.length === 2);
+        let dataBrngMasuk;
+        if (brngMasuk.length === 2) {
+            dataBrngMasuk = await BarangMasuk.findOne({ product: id, active: 1 }).sort({ createdAt: -1 }).limit(1);
+        } else {
+            dataBrngMasuk = await BarangMasuk.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
+        }
+        // let brngMasuk = await BarangMasuk.findOne({ product: id, tahun_bulan: `${thn}-${bln + 1}`, active: 1 }).sort({ createdAt: -1 }).limit(1);
+        let qty_masuk_sebelumnya = dataBrngMasuk === null ? 0 : dataBrngMasuk.qty_masuk;
+        let total_qty_masuk = dataBrngMasuk === null ? 0 + parseInt(qty) : dataBrngMasuk.qty_masuk + parseInt(qty);
 
         let data = {
             product: id,
@@ -325,11 +362,12 @@ const updateQtyMasuk = async (req, res, next) => {
             active: 1,
             qty_masuk: parseInt(qty),
             qty_masuk_sebelumnya: qty_masuk_sebelumnya,
+            tahun_bulan: `${thn}-${bln + 1}`,
             total_qty_masuk: total_qty_masuk,
             tgl_masuk: `${thn}-${bln + 1}-${tgl}`,
         }
-        brngMasuk.active = 0;
-        await brngMasuk.save();
+        dataBrngMasuk.active = 0;
+        await dataBrngMasuk.save();
         let barangMasuk = new BarangMasuk(data);
         await barangMasuk.save();
         return res.json(barangMasuk);
